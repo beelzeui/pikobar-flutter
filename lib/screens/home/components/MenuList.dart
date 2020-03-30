@@ -1,5 +1,6 @@
 import 'package:firebase_remote_config/firebase_remote_config.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_custom_tabs/flutter_custom_tabs.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:pikobar_flutter/components/InWebView.dart';
 import 'package:pikobar_flutter/constants/Analytics.dart';
@@ -12,7 +13,6 @@ import 'package:pikobar_flutter/constants/UrlThirdParty.dart';
 import 'package:pikobar_flutter/constants/firebaseConfig.dart';
 import 'package:pikobar_flutter/environment/Environment.dart';
 import 'package:pikobar_flutter/utilities/AnalyticsHelper.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 class MenuList extends StatefulWidget {
   final RemoteConfig remoteConfig;
@@ -391,7 +391,9 @@ class _MenuListState extends State<MenuList> {
               onPressed: () {
                 if (route != null) {
                   if (openBrowser) {
-                    _launchUrl(route);
+                    print('masul');
+                    _launchURL(context, route);
+                    // _launchURL(context);
                     if (label == Dictionary.saberHoax) {
                       AnalyticsHelper.setLogEvent(
                           Analytics.tappedJabarSaberHoax);
@@ -402,6 +404,9 @@ class _MenuListState extends State<MenuList> {
                           builder: (context) => InWebView(url: arguments)));
 
                       AnalyticsHelper.setLogEvent(Analytics.tappedDonasi);
+                    } else if (iconPath ==
+                        '${Environment.iconAssets}conversation_active.png') {
+                      _launchURL(context, arguments);
                     } else {
                       Navigator.pushNamed(context, route, arguments: arguments);
                     }
@@ -452,6 +457,28 @@ class _MenuListState extends State<MenuList> {
         ],
       ),
     );
+  }
+
+  void _launchURL(BuildContext context, String url) async {
+    try {
+      await launch(
+        url,
+        option: CustomTabsOption(
+          toolbarColor: Theme.of(context).primaryColor,
+          enableDefaultShare: true,
+          enableUrlBarHiding: true,
+          showPageTitle: true,
+          animation: CustomTabsAnimation.slideIn(),
+          extraCustomTabs: <String>[
+            'org.mozilla.firefox',
+            'com.microsoft.emmx',
+          ],
+        ),
+      );
+    } catch (e) {
+      // An exception is thrown if browser app is not installed on Android device.
+      debugPrint(e.toString());
+    }
   }
 
   _buildButtonDisable(String iconPath, String label, {bool visible = true}) {
@@ -756,11 +783,11 @@ class _MenuListState extends State<MenuList> {
   //       });
   // }
 
-  _launchUrl(String url) async {
-    if (await canLaunch(url)) {
-      await launch(url);
-    } else {
-      throw 'Could not launch $url';
-    }
-  }
+  // _launchUrl(String url) async {
+  //   if (await canLaunch(url)) {
+  //     await launch(url);
+  //   } else {
+  //     throw 'Could not launch $url';
+  //   }
+  // }
 }
