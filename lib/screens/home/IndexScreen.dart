@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:background_fetch/background_fetch.dart';
 import 'package:bottom_navigation_badge/bottom_navigation_badge.dart';
 import 'package:firebase_in_app_messaging/firebase_in_app_messaging.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
@@ -20,6 +21,7 @@ import 'package:pikobar_flutter/environment/Environment.dart';
 import 'package:pikobar_flutter/repositories/AuthRepository.dart';
 import 'package:pikobar_flutter/repositories/MessageRepository.dart';
 import 'package:pikobar_flutter/screens/faq/FaqScreen.dart';
+import 'package:pikobar_flutter/screens/home/BackgroundServicePikobar.dart';
 import 'package:pikobar_flutter/screens/home/components/HomeScreen.dart';
 import 'package:pikobar_flutter/screens/messages/messages.dart';
 import 'package:pikobar_flutter/screens/messages/messagesDetailSecreen.dart';
@@ -29,6 +31,7 @@ import 'package:pikobar_flutter/screens/news/NewsDetailScreen.dart';
 import 'package:pikobar_flutter/utilities/AnalyticsHelper.dart';
 import 'package:pikobar_flutter/utilities/AnnouncementSharedPreference.dart';
 import 'package:pikobar_flutter/utilities/NotificationHelper.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class IndexScreen extends StatefulWidget {
   @override
@@ -45,12 +48,18 @@ class IndexScreenState extends State<IndexScreen> {
   List<BottomNavigationBarItem> items;
   int countMessage = 0;
 
+  //variabel used for background fetch
+  bool _enabled = true;
+  int _status = 0;
+  List<String> _events = [];
+
   @override
   void initState() {
     initializeDateFormatting();
     getCountMessage();
     createDirectory();
     setFlutterDownloaderInitial();
+    BackgroundServicePikobar.registerHeadless();
 
     _initializeBottomNavigationBar();
     setStatAnnouncement();
@@ -86,6 +95,127 @@ class IndexScreenState extends State<IndexScreen> {
     super.initState();
   }
 
+  // Platform messages are asynchronous, so we initialize in an async method.
+  Future<void> initPlatformState() async {
+    // Load persisted fetch events from SharedPreferences
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    String json = prefs.getString(EVENTS_KEY);
+    if (json != null) {
+      setState(() {
+        _events = jsonDecode(json).cast<String>();
+      });
+    }
+
+    // Configure BackgroundFetch.
+    BackgroundFetch.configure(
+            BackgroundFetchConfig(
+              minimumFetchInterval: 15,
+              forceAlarmManager: false,
+              stopOnTerminate: false,
+              startOnBoot: true,
+              enableHeadless: true,
+              requiresBatteryNotLow: false,
+              requiresCharging: false,
+              requiresStorageNotLow: false,
+              requiresDeviceIdle: false,
+              requiredNetworkType: NetworkType.NONE,
+            ),
+            _onBackgroundFetch)
+        .then((int status) {
+      print('[BackgroundFetch] configure success: $status');
+      setState(() {
+        _status = status;
+      });
+    }).catchError((e) {
+      print('[BackgroundFetch] configure ERROR: $e');
+      setState(() {
+        _status = e;
+      });
+    });
+
+    // Schedule a "one-shot" custom-task in 10000ms.
+    // These are fairly reliable on Android (particularly with forceAlarmManager) but not iOS,
+    // where device must be powered (and delay will be throttled by the OS).
+    BackgroundFetch.scheduleTask(TaskConfig(
+        taskId: "com.transistorsoft.customtask",
+        delay: 10000,
+        periodic: false,
+        forceAlarmManager: true,
+        stopOnTerminate: false,
+        enableHeadless: true));
+
+    // Optionally query the current BackgroundFetch status.
+    int status = await BackgroundFetch.status;
+    setState(() {
+      _status = status;
+    });
+
+    // If the widget was removed from the tree while the asynchronous platform
+    // message was in flight, we want to discard the reply rather than calling
+    // setState to update our non-existent appearance.
+    if (!mounted) return;
+  }
+
+  void _onBackgroundFetch(String taskId) async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    DateTime timestamp = new DateTime.now();
+    // This is the fetch-event callback.
+    print("[BackgroundFetch] Event received: $taskId");
+    setState(() {
+      _events.insert(0, "$taskId@${timestamp.toString()}");
+    });
+    // Persist fetch events in SharedPreferences
+    prefs.setString(EVENTS_KEY, jsonEncode(_events));
+
+    if (taskId == "flutter_background_fetch") {
+      // Schedule a one-shot task when fetch event received (for testing).
+      BackgroundFetch.scheduleTask(TaskConfig(
+          taskId: "com.transistorsoft.customtask",
+          delay: 5000,
+          periodic: false,
+          forceAlarmManager: true,
+          stopOnTerminate: false,
+          enableHeadless: true));
+    }
+
+    // IMPORTANT:  You must signal completion of your fetch task or the OS can punish your app
+    // for taking too long in the background.
+    BackgroundFetch.finish(taskId);
+  }
+
+  void _onClickEnable(enabled) {
+    setState(() {
+      _enabled = enabled;
+    });
+    if (enabled) {
+      BackgroundFetch.start().then((int status) {
+        print('[BackgroundFetch] start success: $status');
+      }).catchError((e) {
+        print('[BackgroundFetch] start FAILURE: $e');
+      });
+    } else {
+      BackgroundFetch.stop().then((int status) {
+        print('[BackgroundFetch] stop success: $status');
+      });
+    }
+  }
+
+  void _onClickStatus() async {
+    int status = await BackgroundFetch.status;
+    print('[BackgroundFetch] status: $status');
+    setState(() {
+      _status = status;
+    });
+  }
+
+  void _onClickClear() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    prefs.remove(EVENTS_KEY);
+    setState(() {
+      _events = [];
+    });
+  }
+
   setStatAnnouncement() async {
     await AnnouncementSharedPreference.setAnnounceScreen(true);
   }
@@ -96,7 +226,8 @@ class IndexScreenState extends State<IndexScreen> {
 
   createDirectory() async {
     if (Platform.isAndroid) {
-      String localPath = (await getExternalStorageDirectory()).path + '/download';
+      String localPath =
+          (await getExternalStorageDirectory()).path + '/download';
       final publicDownloadDir = Directory(Environment.downloadStorage);
       final savedDir = Directory(localPath);
       bool hasExistedPublicDownloadDir = await publicDownloadDir.exists();
@@ -189,29 +320,25 @@ class IndexScreenState extends State<IndexScreen> {
 
       if (data['id'] != null && data['id'] != 'null') {
         Navigator.of(context).push(MaterialPageRoute(
-            builder: (context) =>
-                NewsDetailScreen(
+            builder: (context) => NewsDetailScreen(
                   id: data['id'],
                   news: newsType,
                   isFromNotification: true,
                 )));
       } else {
-        Navigator.of(context).push(MaterialPageRoute(
-            builder: (context) =>
-                News(news: newsType)));
+        Navigator.of(context).push(
+            MaterialPageRoute(builder: (context) => News(news: newsType)));
       }
     } else if (data['target'] == 'broadcast') {
-      if (data['id'] != null && data['id'] != 'null')  {
+      if (data['id'] != null && data['id'] != 'null') {
         Navigator.of(context).push(MaterialPageRoute(
-            builder: (context) =>
-                MessageDetailScreen(
+            builder: (context) => MessageDetailScreen(
                   id: data['id'],
                   isFromNotification: true,
                 )));
       } else {
         Navigator.of(context).push(MaterialPageRoute(
-            builder: (context) =>
-                Messages(indexScreenState: this)));
+            builder: (context) => Messages(indexScreenState: this)));
       }
     }
   }
