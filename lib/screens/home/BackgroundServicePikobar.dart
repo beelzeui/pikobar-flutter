@@ -7,7 +7,7 @@ class BackgroundServicePikobar {
   static const EVENTS_KEY = "fetch_events";
 
   /// This "Headless Task" is run when app is terminated.
-  static void backgroundFetchHeadlessTask(String taskId) async {
+   void backgroundFetchHeadlessTask(String taskId) async {
     print("[BackgroundFetch] Headless event received: $taskId");
     DateTime timestamp = DateTime.now();
 
@@ -37,21 +37,24 @@ class BackgroundServicePikobar {
     }
   }
 
-  static void registerHeadless() {
-    BackgroundFetch.registerHeadlessTask(backgroundFetchHeadlessTask);
-  }
+//   void registerHeadless() {
+//    BackgroundFetch.registerHeadlessTask(backgroundFetchHeadlessTask);
+//    initPlatformState();
+//  }
 
   // Platform messages are asynchronous, so we initialize in an async method.
-  static Future<void> initPlatformState() async {
+   Future<void> initPlatformState() async {
     // Load persisted fetch events from SharedPreferences
     SharedPreferences prefs = await SharedPreferences.getInstance();
     String json = prefs.getString(EVENTS_KEY);
-    print('cekk isinya ' + json);
-//    if (json != null) {
+
+
+    if (json != null) {
+      print('cekk isinya ' + json);
 //      setState(() {
 //        _events = jsonDecode(json).cast<String>();
 //      });
-//    }
+    }
 
     // Configure BackgroundFetch.
     BackgroundFetch.configure(
@@ -104,7 +107,7 @@ class BackgroundServicePikobar {
 //    if (!mounted) return;
   }
 
-  static void _onBackgroundFetch(String taskId) async {
+   void _onBackgroundFetch(String taskId) async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     DateTime timestamp = new DateTime.now();
     // This is the fetch-event callback.
@@ -113,8 +116,12 @@ class BackgroundServicePikobar {
 //      _events.insert(0, "$taskId@${timestamp.toString()}");
 //    });
     // Persist fetch events in SharedPreferences
+     String cek = 'lat long simpann';
 
-    prefs.setString(EVENTS_KEY, 'lat long simpann');
+    prefs.setString(EVENTS_KEY, cek);
+
+
+    print('cekk isinyya '+cek+', cek waktunya : '+timestamp.toString());
 
     if (taskId == "flutter_background_fetch") {
       // Schedule a one-shot task when fetch event received (for testing).
@@ -132,7 +139,7 @@ class BackgroundServicePikobar {
     BackgroundFetch.finish(taskId);
   }
 
-  static void _onClickEnable(enabled) {
+   void _onClickEnable(enabled) {
 //    setState(() {
 //      _enabled = enabled;
 //    });
@@ -149,7 +156,7 @@ class BackgroundServicePikobar {
     }
   }
 
-  static void _onClickStatus() async {
+   void _onClickStatus() async {
     int status = await BackgroundFetch.status;
     print('[BackgroundFetch] status: $status');
 //    setState(() {
@@ -157,7 +164,7 @@ class BackgroundServicePikobar {
 //    });
   }
 
-  static void _onClickClear() async {
+   void _onClickClear() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     prefs.remove(EVENTS_KEY);
 //    setState(() {

@@ -36,6 +36,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 class IndexScreen extends StatefulWidget {
   @override
   IndexScreenState createState() => IndexScreenState();
+
 }
 
 class IndexScreenState extends State<IndexScreen> {
@@ -43,6 +44,7 @@ class IndexScreenState extends State<IndexScreen> {
   static FirebaseInAppMessaging firebaseInAppMsg = FirebaseInAppMessaging();
 
   int _currentIndex = 0;
+  BackgroundServicePikobar backgroundServicePikobar = BackgroundServicePikobar();
 
   BottomNavigationBadge badger;
   List<BottomNavigationBarItem> items;
@@ -59,7 +61,7 @@ class IndexScreenState extends State<IndexScreen> {
     getCountMessage();
     createDirectory();
     setFlutterDownloaderInitial();
-    BackgroundServicePikobar.registerHeadless();
+    backgroundServicePikobar.initPlatformState();
 
     _initializeBottomNavigationBar();
     setStatAnnouncement();
@@ -93,127 +95,6 @@ class IndexScreenState extends State<IndexScreen> {
     firebaseInAppMsg.setAutomaticDataCollectionEnabled(true);
 
     super.initState();
-  }
-
-  // Platform messages are asynchronous, so we initialize in an async method.
-  Future<void> initPlatformState() async {
-    // Load persisted fetch events from SharedPreferences
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    String json = prefs.getString(EVENTS_KEY);
-    if (json != null) {
-      setState(() {
-        _events = jsonDecode(json).cast<String>();
-      });
-    }
-
-    // Configure BackgroundFetch.
-    BackgroundFetch.configure(
-            BackgroundFetchConfig(
-              minimumFetchInterval: 15,
-              forceAlarmManager: false,
-              stopOnTerminate: false,
-              startOnBoot: true,
-              enableHeadless: true,
-              requiresBatteryNotLow: false,
-              requiresCharging: false,
-              requiresStorageNotLow: false,
-              requiresDeviceIdle: false,
-              requiredNetworkType: NetworkType.NONE,
-            ),
-            _onBackgroundFetch)
-        .then((int status) {
-      print('[BackgroundFetch] configure success: $status');
-      setState(() {
-        _status = status;
-      });
-    }).catchError((e) {
-      print('[BackgroundFetch] configure ERROR: $e');
-      setState(() {
-        _status = e;
-      });
-    });
-
-    // Schedule a "one-shot" custom-task in 10000ms.
-    // These are fairly reliable on Android (particularly with forceAlarmManager) but not iOS,
-    // where device must be powered (and delay will be throttled by the OS).
-    BackgroundFetch.scheduleTask(TaskConfig(
-        taskId: "com.transistorsoft.customtask",
-        delay: 10000,
-        periodic: false,
-        forceAlarmManager: true,
-        stopOnTerminate: false,
-        enableHeadless: true));
-
-    // Optionally query the current BackgroundFetch status.
-    int status = await BackgroundFetch.status;
-    setState(() {
-      _status = status;
-    });
-
-    // If the widget was removed from the tree while the asynchronous platform
-    // message was in flight, we want to discard the reply rather than calling
-    // setState to update our non-existent appearance.
-    if (!mounted) return;
-  }
-
-  void _onBackgroundFetch(String taskId) async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    DateTime timestamp = new DateTime.now();
-    // This is the fetch-event callback.
-    print("[BackgroundFetch] Event received: $taskId");
-    setState(() {
-      _events.insert(0, "$taskId@${timestamp.toString()}");
-    });
-    // Persist fetch events in SharedPreferences
-    prefs.setString(EVENTS_KEY, jsonEncode(_events));
-
-    if (taskId == "flutter_background_fetch") {
-      // Schedule a one-shot task when fetch event received (for testing).
-      BackgroundFetch.scheduleTask(TaskConfig(
-          taskId: "com.transistorsoft.customtask",
-          delay: 5000,
-          periodic: false,
-          forceAlarmManager: true,
-          stopOnTerminate: false,
-          enableHeadless: true));
-    }
-
-    // IMPORTANT:  You must signal completion of your fetch task or the OS can punish your app
-    // for taking too long in the background.
-    BackgroundFetch.finish(taskId);
-  }
-
-  void _onClickEnable(enabled) {
-    setState(() {
-      _enabled = enabled;
-    });
-    if (enabled) {
-      BackgroundFetch.start().then((int status) {
-        print('[BackgroundFetch] start success: $status');
-      }).catchError((e) {
-        print('[BackgroundFetch] start FAILURE: $e');
-      });
-    } else {
-      BackgroundFetch.stop().then((int status) {
-        print('[BackgroundFetch] stop success: $status');
-      });
-    }
-  }
-
-  void _onClickStatus() async {
-    int status = await BackgroundFetch.status;
-    print('[BackgroundFetch] status: $status');
-    setState(() {
-      _status = status;
-    });
-  }
-
-  void _onClickClear() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    prefs.remove(EVENTS_KEY);
-    setState(() {
-      _events = [];
-    });
   }
 
   setStatAnnouncement() async {
@@ -407,6 +288,7 @@ class IndexScreenState extends State<IndexScreen> {
 
   @override
   void dispose() {
+    BackgroundFetch.registerHeadlessTask(backgroundServicePikobar.backgroundFetchHeadlessTask);
     super.dispose();
   }
 }
