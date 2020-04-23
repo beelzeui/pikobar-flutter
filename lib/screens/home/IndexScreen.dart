@@ -44,7 +44,7 @@ class IndexScreenState extends State<IndexScreen> {
   static FirebaseInAppMessaging firebaseInAppMsg = FirebaseInAppMessaging();
 
   int _currentIndex = 0;
-  BackgroundServicePikobar backgroundServicePikobar = BackgroundServicePikobar();
+//  BackgroundServicePikobar backgroundServicePikobar = BackgroundServicePikobar();
 
   BottomNavigationBadge badger;
   List<BottomNavigationBarItem> items;
@@ -61,7 +61,7 @@ class IndexScreenState extends State<IndexScreen> {
     getCountMessage();
     createDirectory();
     setFlutterDownloaderInitial();
-    backgroundServicePikobar.initPlatformState();
+//    backgroundServicePikobar.initPlatformState();
 
     _initializeBottomNavigationBar();
     setStatAnnouncement();
@@ -288,7 +288,7 @@ class IndexScreenState extends State<IndexScreen> {
 
   @override
   void dispose() {
-    BackgroundFetch.registerHeadlessTask(backgroundServicePikobar.backgroundFetchHeadlessTask);
+//    BackgroundFetch.registerHeadlessTask(backgroundServicePikobar.backgroundFetchHeadlessTask);
     super.dispose();
   }
 }
