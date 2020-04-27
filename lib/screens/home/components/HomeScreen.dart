@@ -48,8 +48,8 @@ class _HomeScreenState extends State<HomeScreen> {
   Future<void> getInfoLocation() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     setState(() {
-      dataLocation = prefs.getString('fetch_events');
-      print('cekk location '+dataLocation);
+      dataLocation = prefs.getString(Dictionary.eventKey);
+      print('cekk location '+dataLocation.toString());
     });
   }
 

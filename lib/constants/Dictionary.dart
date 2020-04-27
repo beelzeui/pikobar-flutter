@@ -228,4 +228,6 @@ class Dictionary {
   static String emptyDataDocuments = 'Dokumen tidak ada';
   static String permissionDownloadAttachment =
       'Untuk mengunduh dokumen, izinkan aplikasi Pikobar untuk mengakses penyimpanan Anda.';
+
+  static String eventKey = "fetch_events";
 }
