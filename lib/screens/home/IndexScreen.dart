@@ -21,7 +21,6 @@ import 'package:pikobar_flutter/environment/Environment.dart';
 import 'package:pikobar_flutter/repositories/AuthRepository.dart';
 import 'package:pikobar_flutter/repositories/MessageRepository.dart';
 import 'package:pikobar_flutter/screens/faq/FaqScreen.dart';
-import 'package:pikobar_flutter/screens/home/BackgroundServicePikobar.dart';
 import 'package:pikobar_flutter/screens/home/components/HomeScreen.dart';
 import 'package:pikobar_flutter/screens/messages/messages.dart';
 import 'package:pikobar_flutter/screens/messages/messagesDetailSecreen.dart';
@@ -44,16 +43,10 @@ class IndexScreenState extends State<IndexScreen> {
   static FirebaseInAppMessaging firebaseInAppMsg = FirebaseInAppMessaging();
 
   int _currentIndex = 0;
-//  BackgroundServicePikobar backgroundServicePikobar = BackgroundServicePikobar();
 
   BottomNavigationBadge badger;
   List<BottomNavigationBarItem> items;
   int countMessage = 0;
-
-  //variabel used for background fetch
-  bool _enabled = true;
-  int _status = 0;
-  List<String> _events = [];
 
   @override
   void initState() {
@@ -288,7 +281,6 @@ class IndexScreenState extends State<IndexScreen> {
 
   @override
   void dispose() {
-//    BackgroundFetch.registerHeadlessTask(backgroundServicePikobar.backgroundFetchHeadlessTask);
     super.dispose();
   }
 }
