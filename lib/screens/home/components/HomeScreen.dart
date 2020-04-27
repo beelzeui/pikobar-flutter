@@ -8,7 +8,6 @@ import 'package:pikobar_flutter/constants/FontsFamily.dart';
 import 'package:pikobar_flutter/constants/UrlThirdParty.dart';
 import 'package:pikobar_flutter/constants/firebaseConfig.dart';
 import 'package:pikobar_flutter/environment/Environment.dart';
-import 'package:pikobar_flutter/screens/home/BackgroundServicePikobar.dart';
 import 'package:pikobar_flutter/screens/home/IndexScreen.dart';
 import 'package:pikobar_flutter/screens/home/components/AnnouncementScreen.dart';
 import 'package:pikobar_flutter/screens/home/components/Documents.dart';

@@ -8,9 +8,11 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:pikobar_flutter/constants/Dictionary.dart';
 import 'package:pikobar_flutter/constants/FontsFamily.dart';
 import 'package:pikobar_flutter/constants/Navigation.dart';
+import 'package:pikobar_flutter/screens/checkDistribution/checkDistributionServices.dart';
 import 'package:pikobar_flutter/screens/home/IndexScreen.dart';
 import 'package:pikobar_flutter/constants/Colors.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -39,6 +41,17 @@ void backgroundFetchHeadlessTask(String taskId) async {
 
   print('Simpan Data cek waktunya headless : ' + saveData.toString());
 
+  Geolocator geolocator = Geolocator()..forceAndroidLocationManager = true;
+  GeolocationStatus geolocationStatus  = await geolocator.checkGeolocationPermissionStatus();
+
+  print('cekk isinya headless '+ geolocationStatus.toString());
+
+//  Position position = await Geolocator().getLastKnownPosition(desiredAccuracy: LocationAccuracy.high);
+//  if (position != null && position.latitude != null) {
+//    print('cekk lat long headless'+position.latitude.toString());
+//  }else{
+//    print('cekk lat long kosong headless');
+//  }
 
   // Persist fetch events in SharedPreferences
 //  prefs.setString(EVENTS_KEY, saveData);
@@ -99,6 +112,7 @@ class _AppState extends State<App> {
   Widget build(BuildContext context) {
     SystemChrome.setSystemUIOverlayStyle(
         SystemUiOverlayStyle(statusBarColor: ColorBase.green));
+    CheckDistributions().handleLocation(context);
 
     SystemChrome.setPreferredOrientations([
       DeviceOrientation.portraitUp,
@@ -137,6 +151,18 @@ class _AppState extends State<App> {
       String saveData = timestamp.toString();
       print('Simpan Data cek waktunya : ' + saveData.toString());
 
+      Geolocator geolocator = Geolocator()..forceAndroidLocationManager = true;
+      GeolocationStatus geolocationStatus  = await geolocator.checkGeolocationPermissionStatus();
+
+      print('cekk isinya'+ geolocationStatus.toString());
+
+      Position position = await Geolocator().getLastKnownPosition(desiredAccuracy: LocationAccuracy.high);
+      if (position != null && position.latitude != null) {
+        print('cekk lat long '+position.latitude.toString());
+      }else{
+        print('cekk lat long kosong');
+      }
+
       if (taskId == "flutter_background_fetch") {
         // Schedule a one-shot task when fetch event received (for testing).
         BackgroundFetch.scheduleTask(TaskConfig(
@@ -168,5 +194,4 @@ class _AppState extends State<App> {
     // setState to update our non-existent appearance.
     if (!mounted) return;
   }
-
 }
