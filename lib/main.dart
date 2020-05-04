@@ -44,10 +44,19 @@ void backgroundFetchHeadlessTask(String taskId) async {
 
   print('Simpan Data cek waktunya headless : ' + saveData.toString());
 
-  Geolocator geolocator = Geolocator()..forceAndroidLocationManager = true;
-  GeolocationStatus geolocationStatus  = await geolocator.checkGeolocationPermissionStatus();
+  Geolocator geolocator = Geolocator();
+  Position location;
 
-  print('cekkk geolocation status '+geolocationStatus.toString());
+//  GeolocationStatus geolocationStatus  = await geolocator.checkGeolocationPermissionStatus();
+
+  try{
+    location = await geolocator.getCurrentPosition(desiredAccuracy: LocationAccuracy.high, locationPermissionLevel: GeolocationPermission.locationAlways);
+    if (location != null && location.latitude != null) {
+      print('cekkk geolocation status '+location.latitude.toString());
+    }
+  }catch(e){
+    print("[Background Headless] Location error: $e");
+  }
 
 
 //  Position position = await Geolocator().getLastKnownPosition(desiredAccuracy: LocationAccuracy.high);
