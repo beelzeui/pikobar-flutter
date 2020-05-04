@@ -8,6 +8,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:geolocation/geolocation.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:pikobar_flutter/constants/Dictionary.dart';
 import 'package:pikobar_flutter/constants/FontsFamily.dart';
@@ -41,10 +42,9 @@ void backgroundFetchHeadlessTask(String taskId) async {
 
   print('Simpan Data cek waktunya headless : ' + saveData.toString());
 
-  Geolocator geolocator = Geolocator()..forceAndroidLocationManager = true;
-  GeolocationStatus geolocationStatus  = await geolocator.checkGeolocationPermissionStatus();
+  LocationResult result = await Geolocation.lastKnownLocation();
+  print('location data '+ result.location.latitude.toString());
 
-  print('cekk isinya headless '+ geolocationStatus.toString());
 
 //  Position position = await Geolocator().getLastKnownPosition(desiredAccuracy: LocationAccuracy.high);
 //  if (position != null && position.latitude != null) {
@@ -106,6 +106,17 @@ class _AppState extends State<App> {
   void initState() {
     super.initState();
     initPlatformState();
+    enableLocationServices();
+  }
+
+  enableLocationServices() async {
+    Geolocation.enableLocationServices().then((result) {
+      // Request location
+      print('cek isinya apa '+result.toString());
+    }).catchError((e) {
+      print('error naon '+e.toString());
+      // Location Services Enablind Cancelled
+    });
   }
 
   @override
@@ -151,16 +162,9 @@ class _AppState extends State<App> {
       String saveData = timestamp.toString();
       print('Simpan Data cek waktunya : ' + saveData.toString());
 
-      Geolocator geolocator = Geolocator()..forceAndroidLocationManager = true;
-      GeolocationStatus geolocationStatus  = await geolocator.checkGeolocationPermissionStatus();
-
-      print('cekk isinya'+ geolocationStatus.toString());
-
-      Position position = await Geolocator().getLastKnownPosition(desiredAccuracy: LocationAccuracy.high);
-      if (position != null && position.latitude != null) {
-        print('cekk lat long '+position.latitude.toString());
-      }else{
-        print('cekk lat long kosong');
+      LocationResult result = await Geolocation.lastKnownLocation();
+      if (mounted) {
+        print('location data '+ result.location.latitude.toString());
       }
 
       if (taskId == "flutter_background_fetch") {
