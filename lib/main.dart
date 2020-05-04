@@ -8,8 +8,8 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:geolocation/geolocation.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:pikobar_flutter/constants/Dictionary.dart';
 import 'package:pikobar_flutter/constants/FontsFamily.dart';
 import 'package:pikobar_flutter/constants/Navigation.dart';
@@ -18,7 +18,9 @@ import 'package:pikobar_flutter/screens/home/IndexScreen.dart';
 import 'package:pikobar_flutter/constants/Colors.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'components/DialogRequestPermission.dart';
 import 'configs/Routes.dart';
+import 'environment/Environment.dart';
 
 class SimpleBlocDelegate extends BlocDelegate {
   @override
@@ -42,8 +44,10 @@ void backgroundFetchHeadlessTask(String taskId) async {
 
   print('Simpan Data cek waktunya headless : ' + saveData.toString());
 
-  LocationResult result = await Geolocation.lastKnownLocation();
-  print('location data '+ result.location.latitude.toString());
+  Geolocator geolocator = Geolocator()..forceAndroidLocationManager = true;
+  GeolocationStatus geolocationStatus  = await geolocator.checkGeolocationPermissionStatus();
+
+  print('cekkk geolocation status '+geolocationStatus.toString());
 
 
 //  Position position = await Geolocator().getLastKnownPosition(desiredAccuracy: LocationAccuracy.high);
@@ -106,17 +110,48 @@ class _AppState extends State<App> {
   void initState() {
     super.initState();
     initPlatformState();
-    enableLocationServices();
+    enableLocationServices(context);
   }
 
-  enableLocationServices() async {
-    Geolocation.enableLocationServices().then((result) {
-      // Request location
-      print('cek isinya apa '+result.toString());
-    }).catchError((e) {
-      print('error naon '+e.toString());
-      // Location Services Enablind Cancelled
-    });
+    Future<void> enableLocationServices(BuildContext context) async {
+      PermissionStatus permission = await PermissionHandler()
+          .checkPermissionStatus(PermissionGroup.location);
+      if (permission == PermissionStatus.granted) {
+      } else {
+        showDialog(
+            context: context,
+            builder: (BuildContext context) => DialogRequestPermission(
+              image: Image.asset(
+                '${Environment.iconAssets}map_pin.png',
+                fit: BoxFit.contain,
+                color: Colors.white,
+              ),
+              description: Dictionary.permissionLocationSpread,
+              onOkPressed: () {
+                Navigator.of(context).pop();
+                PermissionHandler().requestPermissions(
+                    [PermissionGroup.location]).then((status) {
+                  _onStatusRequested(context, status);
+                });
+              },
+              onCancelPressed: () {
+                // AnalyticsHelper.setLogEvent(Analytics.permissionDismissLocation);
+                Navigator.of(context).pop();
+              },
+            ));
+      }
+    }
+
+
+  void _onStatusRequested(BuildContext context,
+      Map<PermissionGroup, PermissionStatus> statuses) async {
+    final statusLocation = statuses[PermissionGroup.location];
+    if (statusLocation == PermissionStatus.granted) {
+      enableLocationServices(context);
+      // AnalyticsHelper.setLogEvent(Analytics.permissionGrantedLocation);
+    } else {
+      // AnalyticsHelper.setLogEvent(Analytics.permissionDeniedLocation);
+    }
   }
 
   @override
@@ -162,10 +197,10 @@ class _AppState extends State<App> {
       String saveData = timestamp.toString();
       print('Simpan Data cek waktunya : ' + saveData.toString());
 
-      LocationResult result = await Geolocation.lastKnownLocation();
-      if (mounted) {
-        print('location data '+ result.location.latitude.toString());
-      }
+      Geolocator geolocator = Geolocator()..forceAndroidLocationManager = true;
+      GeolocationStatus geolocationStatus  = await geolocator.checkGeolocationPermissionStatus();
+
+      print('cekkk geolocation status '+geolocationStatus.toString());
 
       if (taskId == "flutter_background_fetch") {
         // Schedule a one-shot task when fetch event received (for testing).
