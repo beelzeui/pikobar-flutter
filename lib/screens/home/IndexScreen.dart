@@ -1,6 +1,5 @@
 import 'dart:convert';
 import 'dart:io';
-
 import 'package:background_fetch/background_fetch.dart';
 import 'package:bottom_navigation_badge/bottom_navigation_badge.dart';
 import 'package:firebase_in_app_messaging/firebase_in_app_messaging.dart';

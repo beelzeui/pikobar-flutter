@@ -52,7 +52,7 @@ void backgroundFetchHeadlessTask(String taskId) async {
   try{
     location = await geolocator.getCurrentPosition(desiredAccuracy: LocationAccuracy.high, locationPermissionLevel: GeolocationPermission.locationAlways);
     if (location != null && location.latitude != null) {
-      print('cekkk geolocation status '+location.latitude.toString());
+      print('cekkk geolocation status headless'+location.latitude.toString());
     }
   }catch(e){
     print("[Background Headless] Location error: $e");
@@ -208,6 +208,18 @@ class _AppState extends State<App> {
 
       Geolocator geolocator = Geolocator()..forceAndroidLocationManager = true;
       GeolocationStatus geolocationStatus  = await geolocator.checkGeolocationPermissionStatus();
+      Position location;
+
+//  GeolocationStatus geolocationStatus  = await geolocator.checkGeolocationPermissionStatus();
+
+      try{
+        location = await geolocator.getCurrentPosition(desiredAccuracy: LocationAccuracy.high, locationPermissionLevel: GeolocationPermission.locationAlways);
+        if (location != null && location.latitude != null) {
+          print('cekkk geolocation status '+location.latitude.toString());
+        }
+      }catch(e){
+        print("[Background Headless] Location error: $e");
+      }
 
       print('cekkk geolocation status '+geolocationStatus.toString());
 
