@@ -25,6 +25,9 @@ apply plugin: 'com.android.application'
 apply plugin: 'kotlin-android'
 apply from: "$flutterRoot/packages/flutter_tools/gradle/flutter.gradle"
 
+Project background_geolocation = project(':flutter_background_geolocation')
+apply from: "${background_geolocation.projectDir}/background_geolocation.gradle"
+
 android {
     compileSdkVersion 29
 
@@ -56,12 +59,15 @@ android {
 
             // Enables resource shrinking, which is performed by the
             // Android Gradle plugin.1
-            shrinkResources true
+            shrinkResources false
 
 
             // TODO: Add your own signing config for the release build.flut
             // Signing with the debug keys for now, so `flutter run --release` works.
             signingConfig signingConfigs.debug
+
+            // background_geolocation requires custom Proguard Rules with minifyEnabled
+            proguardFiles "${background_geolocation.projectDir}/proguard-rules.pro"
         }
     }
 }

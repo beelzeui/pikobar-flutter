@@ -28,6 +28,17 @@ import 'package:pikobar_flutter/utilities/BasicUtils.dart';
 import 'package:pikobar_flutter/utilities/DeviceUpdateHelper.dart';
 import 'package:pikobar_flutter/utilities/LocationService.dart';
 import 'package:pikobar_flutter/utilities/NotificationHelper.dart';
+import 'package:flutter_background_geolocation/flutter_background_geolocation.dart'
+    as bg;
+
+////
+// For pretty-printing location JSON.  Not a requirement of flutter_background_geolocation
+//
+import 'dart:convert';
+
+JsonEncoder encoder = new JsonEncoder.withIndent("     ");
+//
+////
 
 class IndexScreen extends StatefulWidget {
   @override
@@ -45,8 +56,27 @@ class IndexScreenState extends State<IndexScreen> {
   int countMessage = 0;
   DateTime currentBackPressTime;
 
+  String _odometer;
+  String _content;
+
   @override
   void initState() {
+    // 1.  Listen to events (See docs for all 12 available events).
+    bg.BackgroundGeolocation.onLocation(_onLocation);
+
+    // 2.  Configure the plugin
+    bg.BackgroundGeolocation.ready(bg.Config(
+        desiredAccuracy: bg.Config.DESIRED_ACCURACY_HIGH,
+        distanceFilter: 10.0,
+        stopOnTerminate: false,
+        startOnBoot: true,
+        debug: true,
+        logLevel: bg.Config.LOG_LEVEL_VERBOSE,
+        reset: true,
+        schedule: ['1-7 09:00-17:00'],
+        scheduleUseAlarmManager: true
+    ));
+
     initializeFirebaseMessaging();
     initializeDateFormatting();
     initializePlatformState();
@@ -57,6 +87,18 @@ class IndexScreenState extends State<IndexScreen> {
     updateCurrentLocation();
 
     super.initState();
+  }
+
+  ////
+  // Event handlers
+  //
+  void _onLocation(bg.Location location) {
+    Fluttertoast.showToast(msg: '[location] - $location');
+    String odometerKM = (location.odometer / 1000.0).toStringAsFixed(1);
+    setState(() {
+      _content = encoder.convert(location.toMap());
+      _odometer = odometerKM;
+    });
   }
 
   initializeFirebaseMessaging() {
