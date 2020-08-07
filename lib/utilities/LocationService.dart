@@ -22,13 +22,9 @@ import 'AnalyticsHelper.dart';
 
 class LocationService {
   static Future<void> sendCurrentLocation(BuildContext context) async {
-    var permissionService =
-        Platform.isIOS ? Permission.locationWhenInUse : Permission.locationAlways;
+    var permissionService = Permission.locationAlways;
 
     if (await permissionService.status.isGranted) {
-      await bg.BackgroundGeolocation.start().then((bg.State state) {
-        Fluttertoast.showToast(msg: '[start] success $state');
-      });
       await actionSendLocation();
     } else {
       showModalBottomSheet(
@@ -117,8 +113,7 @@ class LocationService {
   }
 
   static Future<void> actionSendLocation() async {
-    var permissionService =
-    Platform.isIOS ? Permission.locationWhenInUse : Permission.location;
+    var permissionService = Permission.locationAlways;
 
     if (await permissionService.isGranted) {
 
@@ -158,9 +153,6 @@ class LocationService {
   static Future<void> _onStatusRequested(
       BuildContext context, PermissionStatus statuses) async {
     if (statuses.isGranted) {
-      await bg.BackgroundGeolocation.start().then((bg.State state) {
-        Fluttertoast.showToast(msg: '[start] success $state');
-      });
       await actionSendLocation();
       AnalyticsHelper.setLogEvent(Analytics.permissionGrantedLocation);
     } else {

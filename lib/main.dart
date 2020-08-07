@@ -38,15 +38,10 @@ void main() {
 
   BlocSupervisor.delegate = SimpleBlocDelegate();
 
-  runZoned<Future<void>>(() async {
+  runZonedGuarded(() {
     WidgetsFlutterBinding.ensureInitialized();
-    // runApp(devicePreview.DevicePreview(
-    //   enabled: !kReleaseMode, // disabled in release mode
-    //   builder: (context) => App(),
-    // ));
-
     runApp(App());
-  }, onError: Crashlytics.instance.recordError);
+  }, Crashlytics.instance.recordError);
 }
 
 class App extends StatefulWidget {
