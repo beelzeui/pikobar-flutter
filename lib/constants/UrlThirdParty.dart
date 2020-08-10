@@ -14,4 +14,5 @@
   const String kUrlSelfDiagnose = 'http://dev.engine.prixa.ai/';
   const String kUrlGoogle = 'https://www.google.com';
   const String kUrlTracking = 'https://tracking.pikobar.jabarprov.go.id';
+  const String kUrlFirebaseTracking = 'https://us-central1-jabarprov-covid19.cloudfunctions.net/locationTracking';
   

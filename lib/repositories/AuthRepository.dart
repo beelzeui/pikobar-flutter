@@ -56,6 +56,7 @@ class AuthRepository {
     });
     await deleteToken();
     await deleteLocalUserInfo();
+    await LocationService.stopBackgroundLocation();
   }
 
   /// Sign In with Apple

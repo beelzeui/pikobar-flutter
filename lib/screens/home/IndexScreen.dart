@@ -29,6 +29,8 @@ import 'package:pikobar_flutter/utilities/DeviceUpdateHelper.dart';
 import 'package:pikobar_flutter/utilities/LocationService.dart';
 import 'package:pikobar_flutter/utilities/NotificationHelper.dart';
 
+
+
 class IndexScreen extends StatefulWidget {
   @override
   IndexScreenState createState() => IndexScreenState();
@@ -47,6 +49,7 @@ class IndexScreenState extends State<IndexScreen> {
 
   @override
   void initState() {
+    initializeBackgroundLocation();
     initializeFirebaseMessaging();
     initializeDateFormatting();
     initializePlatformState();
@@ -54,7 +57,6 @@ class IndexScreenState extends State<IndexScreen> {
     initializeBottomNavigationBar();
     initializeToken();
     getCountMessage();
-    updateCurrentLocation();
 
     super.initState();
   }
@@ -302,8 +304,8 @@ class IndexScreenState extends State<IndexScreen> {
     });
   }
 
-  updateCurrentLocation() async {
-    await LocationService.sendCurrentLocation(context);
+  initializeBackgroundLocation() async {
+    await LocationService.initializeBackgroundLocation(context);
   }
 
   @override

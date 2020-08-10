@@ -22,6 +22,7 @@ import 'package:pikobar_flutter/repositories/AuthRepository.dart';
 import 'package:pikobar_flutter/screens/myAccount/OnboardLoginScreen.dart';
 import 'package:pikobar_flutter/utilities/BasicUtils.dart';
 import 'package:pikobar_flutter/utilities/HexColor.dart';
+import 'package:pikobar_flutter/utilities/LocationService.dart';
 import 'package:pikobar_flutter/utilities/OpenChromeSapariBrowser.dart';
 
 import 'TermsConditions.dart';
@@ -62,7 +63,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     ..add(AppStarted())),
         ],
         child: BlocListener<AuthenticationBloc, AuthenticationState>(
-          listener: (context, state) {
+          listener: (context, state) async {
             if (state is AuthenticationFailure) {
               // Show an error message dialog when login,
               // except for errors caused by users who were canceled to login.
@@ -96,6 +97,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   duration: Duration(seconds: 15),
                 ),
               );
+            } else if (state is AuthenticationAuthenticated) {
+              Scaffold.of(context).hideCurrentSnackBar();
+              await LocationService.initializeBackgroundLocation(context);
             } else {
               Scaffold.of(context).hideCurrentSnackBar();
             }

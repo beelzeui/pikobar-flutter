@@ -28,6 +28,7 @@ import 'package:pikobar_flutter/screens/selfReport/ContactHistoryScreen.dart';
 import 'package:pikobar_flutter/screens/selfReport/EducationListScreen.dart';
 import 'package:pikobar_flutter/screens/selfReport/SelfReportList.dart';
 import 'package:pikobar_flutter/utilities/AnalyticsHelper.dart';
+import 'package:pikobar_flutter/utilities/LocationService.dart';
 
 class SelfReportScreen extends StatefulWidget {
   @override
@@ -63,7 +64,7 @@ class _SelfReportScreenState extends State<SelfReportScreen> {
                   ..add(AppStarted())),
       ],
       child: BlocListener<AuthenticationBloc, AuthenticationState>(
-        listener: (context, state) {
+        listener: (context, state) async {
           if (state is AuthenticationFailure) {
             // Show an error message dialog when login,
             // except for errors caused by users who were canceled to login.
@@ -118,6 +119,7 @@ class _SelfReportScreenState extends State<SelfReportScreen> {
               profileLoaded = state;
               hasLogin = true;
             });
+            await LocationService.initializeBackgroundLocation(context);
           }
         },
         child: Scaffold(
