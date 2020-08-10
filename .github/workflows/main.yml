@@ -30,17 +30,24 @@ jobs:
           # run spesific version
           flutter-version: '1.17.5'
       
+      - name: Decode
+        id: write_file
+        uses: timheuer/base64-to-file@v1.0.3
+        with:
+          fileName: 'pikobar.keystore'
+          encodedString: ${{ secrets.PIKOBAR_KEY }}
+      
       # Runs setup env
+      - run: mv pikobar.keystore ./android/pikobar.keystore
       - run: echo '${{ secrets.GOOGLE_SERVICES }}' > ./android/app/google-services.json
       - run: echo '${{ secrets.GOOGLE_SERVICES }}' > ./android/app/src/main/google-services.json
-
+      
       # build APK
       - name: Build APK
         env:
-          KEY_JKS: ${{ secrets.PIKOBAR_KEY }}
           KEY_PASSWORD: ${{ secrets.PIKOBAR_PASSWORD }}
           ALIAS_PASSWORD: ${{ secrets.PIKOBAR_PASSWORD }}
-        run: echo $KEY_JKS | base64 --decode > ./android/pikobar.keystore && flutter pub get && flutter build apk
+        run: flutter pub get && flutter build apk
 
       # move to APK to root directory
       - run: mv build/app/outputs/apk/debug/app-debug.apk pikobar-debug.apk
