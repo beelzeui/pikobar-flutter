@@ -29,13 +29,14 @@ jobs:
         with:
           # run spesific version
           flutter-version: '1.17.5'
-      
-      - env:
+          
+        env:
           KEY_JKS: ${{ secrets.PIKOBAR_KEY }}
           KEY_PASSWORD: ${{ secrets.PIKOBAR_PASSWORD }}
           ALIAS_PASSWORD: ${{ secrets.PIKOBAR_PASSWORD }}
       
       # Runs setup env
+      - run: printenv
       - run: echo $KEY_JKS > ./android/pikobar.keystore
       - run: echo '${{ secrets.GOOGLE_SERVICES }}' > ./android/app/google-services.json
       - run: echo '${{ secrets.GOOGLE_SERVICES }}' > ./android/app/src/main/google-services.json
