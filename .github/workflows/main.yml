@@ -40,7 +40,7 @@ jobs:
           KEY_JKS: ${{ secrets.PIKOBAR_KEY }}
           KEY_PASSWORD: ${{ secrets.PIKOBAR_PASSWORD }}
           ALIAS_PASSWORD: ${{ secrets.PIKOBAR_PASSWORD }}
-        run: echo $KEY_JKS > ./android/pikobar.keystore && flutter pub get && flutter build apk
+        run: echo $KEY_JKS | base64 --decode > ./android/pikobar.keystore && flutter pub get && flutter build apk
 
       # move to APK to root directory
       - run: mv build/app/outputs/apk/debug/app-debug.apk pikobar-debug.apk
