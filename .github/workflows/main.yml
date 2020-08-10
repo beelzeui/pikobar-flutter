@@ -38,7 +38,7 @@ jobs:
           encodedString: ${{ secrets.PIKOBAR_KEY }}
       
       # Runs setup env
-      - run: mv pikobar.keystore ./android/pikobar.keystore
+      - run: mv ${{ steps.write_file.outputs.filePath }} ./android/pikobar.keystore
       - run: echo '${{ secrets.GOOGLE_SERVICES }}' > ./android/app/google-services.json
       - run: echo '${{ secrets.GOOGLE_SERVICES }}' > ./android/app/src/main/google-services.json
       
