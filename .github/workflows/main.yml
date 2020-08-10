@@ -42,9 +42,10 @@ jobs:
       - run: echo 'storeFile=pikobar.keystore' > ./android/key.properties
       - run: echo 'storePassword=${{ secrets.PIKOBAR_PASSWORD }}' > ./android/key.properties
       - run: echo 'keyPassword=${{ secrets.PIKOBAR_PASSWORD }}' > ./android/key.properties
-      - run: echo 'keyAlias=${{ secrets.PIKOBAR_ALIAS }}' > ./android/key.properties
+      - run: echo 'keyAlias=pikobar' > ./android/key.properties
       - run: echo '${{ secrets.GOOGLE_SERVICES }}' > ./android/app/google-services.json
       - run: echo '${{ secrets.GOOGLE_SERVICES }}' > ./android/app/src/main/google-services.json
+      - run: cat ./android/key.properties
       
       # build APK
       - run: flutter pub get && flutter build apk
