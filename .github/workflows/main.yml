@@ -39,15 +39,15 @@ jobs:
       
       # Runs setup env
       - run: mv ${{ steps.write_file.outputs.filePath }} ./android/pikobar.keystore
+      - run: echo 'storeFile=pikobar.keystore' > ./android/key.properties
+      - run: echo 'storePassword=${{ secrets.PIKOBAR_PASSWORD }}' > ./android/key.properties
+      - run: echo 'keyPassword=${{ secrets.PIKOBAR_PASSWORD }}' > ./android/key.properties
+      - run: echo 'keyAlias=${{ secrets.PIKOBAR_ALIAS }}' > ./android/key.properties
       - run: echo '${{ secrets.GOOGLE_SERVICES }}' > ./android/app/google-services.json
       - run: echo '${{ secrets.GOOGLE_SERVICES }}' > ./android/app/src/main/google-services.json
       
       # build APK
-      - name: Build APK
-        env:
-          KEY_PASSWORD: ${{ secrets.PIKOBAR_PASSWORD }}
-          ALIAS_PASSWORD: ${{ secrets.PIKOBAR_PASSWORD }}
-        run: flutter pub get && flutter build apk
+      - run: flutter pub get && flutter build apk
 
       # move to APK to root directory
       - run: mv build/app/outputs/apk/debug/app-debug.apk pikobar-debug.apk
