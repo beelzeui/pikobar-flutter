@@ -47,7 +47,7 @@ jobs:
       - run: echo '${{ secrets.GOOGLE_SERVICES }}' > ./android/app/src/main/google-services.json
       
       # build APK
-      - run: flutter pub get && flutter build apk
+      - run: flutter pub get && flutter build apk --debug
 
       # move to APK to root directory
       - run: mv build/app/outputs/apk/debug/app-debug.apk pikobar-debug.apk
