@@ -199,13 +199,16 @@ class LocationService {
       bg.BackgroundGeolocation.onConnectivityChange(_onConnectivityChange);
       bg.BackgroundGeolocation.onHttp(_onHttp);
 
-      // 2.  Configure the plugin
+      // 2.  Get the user token
+      String userId = await AuthRepository().getToken();
+
+      // 3.  Configure the plugin
       await bg.BackgroundGeolocation.ready(bg.Config(
         url: kUrlFirebaseTracking,
         headers: {"content-type": "application/json"},
         httpRootProperty: 'data',
         locationTemplate: locationTemplate,
-        params: {"userId": AuthRepository().getToken()},
+        params: {"userId": userId},
         autoSync: true,
         autoSyncThreshold: 5,
         batchSync: true,
@@ -223,11 +226,11 @@ class LocationService {
         print("[ready] ${state.toMap()}");
 
         await bg.BackgroundGeolocation.start();
+
+        bg.BackgroundGeolocation.changePace(true);
       }).catchError((error) {
         print('[ready] ERROR: $error');
       });
-
-      bg.BackgroundGeolocation.changePace(true);
     }
   }
 
