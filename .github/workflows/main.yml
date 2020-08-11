@@ -49,9 +49,12 @@ jobs:
       # build APK
       - run: flutter pub get && flutter build apk --debug --split-per-abi
 
-      # move to APK to root directory
-      - run: mv build/app/outputs/apk/debug/app-debug.apk pikobar-debug.apk
+      # move the APKs to root directory
+      - run: mv build/app/outputs/apk/debug/app-armeabi-v7a-debug.apk pikobar-armeabi-v7a-debug.apk
+      - run: mv build/app/outputs/apk/debug/app-arm64-v8a-debug.apk pikobar-arm64-v8a-debug.apk
+      - run: mv build/app/outputs/apk/debug/app-x86_64-debug.apk pikobar-x86_64-debug.apk
 
       # send to telegram channel
-      - run: curl -F chat_id='${{ secrets.TELEGRAM_CHAT_ID }}' -F document=@'pikobar-debug.apk' -F caption=PiKOBAR_DEBUG https://api.telegram.org/bot'${{ secrets.TELEGRAM_TOKEN }}'/sendDocument
-
+      - run: curl -F chat_id='${{ secrets.TELEGRAM_CHAT_ID }}' -F document=@'pikobar-armeabi-v7a-debug.apk' -F caption='pikobar-armeabi-v7a-debug.apk' https://api.telegram.org/bot'${{ secrets.TELEGRAM_TOKEN }}'/sendDocument
+      - run: curl -F chat_id='${{ secrets.TELEGRAM_CHAT_ID }}' -F document=@'pikobar-arm64-v8a-debug.apk' -F caption='pikobar-arm64-v8a-debug.apk' https://api.telegram.org/bot'${{ secrets.TELEGRAM_TOKEN }}'/sendDocument
+      - run: curl -F chat_id='${{ secrets.TELEGRAM_CHAT_ID }}' -F document=@'pikobar-x86_64-debug.apk' -F caption='pikobar-x86_64-debug.apk' https://api.telegram.org/bot'${{ secrets.TELEGRAM_TOKEN }}'/sendDocument
