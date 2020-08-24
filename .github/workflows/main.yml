@@ -6,7 +6,7 @@ name: Build Test Background Location
 # events but only for the master branch
 on:
   push:
-    branches: [ background-geolocation ]
+    branches: [ geofencing ]
   # pull_request:
   #   branches: [ feature/Feature-github-workflow ]
 

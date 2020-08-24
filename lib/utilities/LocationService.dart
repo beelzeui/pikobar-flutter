@@ -22,14 +22,16 @@ import 'package:pikobar_flutter/repositories/AuthRepository.dart';
 import 'package:pikobar_flutter/repositories/LocationsRepository.dart';
 import 'package:flutter_background_geolocation/flutter_background_geolocation.dart'
 as bg;
+import 'package:pikobar_flutter/utilities/NotificationHelper.dart';
 import 'AnalyticsHelper.dart';
 
 class LocationService {
   static Future<void> initializeBackgroundLocation(BuildContext context) async {
-    if (await _isMonitoredUser()) {
+    Map<String, dynamic> firebaseUser = await _firebaseUser();
+    if (firebaseUser['isMonitoredUser']) {
       if (await Permission.locationAlways.status.isGranted &&
           await Permission.activityRecognition.status.isGranted) {
-        await _configureBackgroundLocation();
+        await _configureBackgroundLocation(userAddressCoordinate: firebaseUser['location']);
         await actionSendLocation();
       } else {
         showModalBottomSheet(
@@ -115,7 +117,7 @@ class LocationService {
                                       Permission.locationAlways,
                                       Permission.activityRecognition,
                                     ].request().then((status) {
-                                      _onStatusRequested(context, status);
+                                      _onStatusRequested(context, status, userAddressCoordinate: firebaseUser['location']);
                                     });
                                   }
                                 }))
@@ -178,7 +180,7 @@ class LocationService {
   }
 
   // New Method
-  static Future<void> _configureBackgroundLocation() async {
+  static Future<void> _configureBackgroundLocation({GeoPoint userAddressCoordinate}) async {
     if (await Permission.locationAlways.status.isGranted &&
         await Permission.activityRecognition.status.isGranted) {
       String locationTemplate = '{'
@@ -193,6 +195,7 @@ class LocationService {
 
       // 1.  Listen to events.
       bg.BackgroundGeolocation.onLocation(_onLocation, _onLocationError);
+      bg.BackgroundGeolocation.onGeofence(_onGeofence);
       bg.BackgroundGeolocation.onMotionChange(_onMotionChange);
       bg.BackgroundGeolocation.onActivityChange(_onActivityChange);
       bg.BackgroundGeolocation.onProviderChange(_onProviderChange);
@@ -202,7 +205,30 @@ class LocationService {
       // 2.  Get the user token
       String userId = await AuthRepository().getToken();
 
-      // 3.  Configure the plugin
+      // 3. Remove all current set geofences and Add a new geofence.
+      bg.BackgroundGeolocation.removeGeofences().then((bool success) {
+        print('[removeGeofences] all geofences have been destroyed');
+
+        if (userAddressCoordinate != null) {
+          bg.BackgroundGeolocation.addGeofence(bg.Geofence(
+              identifier: "DANGER_ZONE",
+              radius: 50,
+              latitude: userAddressCoordinate.latitude,
+              longitude: userAddressCoordinate.longitude,
+              notifyOnEntry: true,
+              notifyOnExit: true,
+              extras: {
+                "route_id": 1234
+              }
+          )).then((bool success) {
+            print('[addGeofence] SUCCESS: {${userAddressCoordinate.latitude} ${userAddressCoordinate.longitude}} ');
+          }).catchError((dynamic error) {
+            print('[addGeofence] FAILURE: $error');
+          });
+        }
+      });
+
+      // 4.  Configure the plugin
       await bg.BackgroundGeolocation.ready(bg.Config(
         url: kUrlFirebaseTracking,
         headers: {"content-type": "application/json"},
@@ -238,8 +264,9 @@ class LocationService {
     await bg.BackgroundGeolocation.stop();
   }
 
-  static Future<bool> _isMonitoredUser() async {
+  static Future<Map<String, dynamic>> _firebaseUser() async {
     bool monitored = false;
+    GeoPoint geoPoint;
 
     /// Get the currently signed-in [FirebaseUser]
     FirebaseUser user = await FirebaseAuth.instance.currentUser();
@@ -253,15 +280,41 @@ class LocationService {
           String userHealthStatus = snapshot.data['health_status'];
 
           monitored = listHealthStatus.contains(userHealthStatus);
+          geoPoint = snapshot.data['location'];
         }
       });
     }
 
-    return monitored;
+    Map<String, dynamic> result = {
+      'isMonitoredUser': monitored,
+      'location': geoPoint
+    };
+
+    return result;
   }
 
   static void _onLocation(bg.Location location) {
     print('[location] - $location');
+  }
+
+  static void _onGeofence(bg.GeofenceEvent event) {
+    print('[geofence] ${event.identifier}, ${event.action}');
+
+    try {
+      NotificationHelper().showNotification(
+          '${event.action} ${event.identifier}',
+          'Anda ${(event.action == 'ENTER')
+              ? 'memasuki'
+              : 'keluar dari' } zona merah COVID-19',
+          payload: '[geofence] ${event.identifier}, ${event.action}',
+          onSelectNotification: (String payload) async {
+            if (payload != null) {
+              print('notification payload: ' + payload);
+            }
+          });
+    } catch (e) {
+      print('[geofence] Notification ${e.toString()}');
+    }
   }
 
   static void _onLocationError(bg.LocationError error) {
@@ -289,10 +342,10 @@ class LocationService {
   }
 
   static Future<void> _onStatusRequested(BuildContext context,
-      Map<Permission, PermissionStatus> statuses) async {
+      Map<Permission, PermissionStatus> statuses, {GeoPoint userAddressCoordinate}) async {
     if (statuses[Permission.locationAlways].isGranted &&
         statuses[Permission.activityRecognition].isGranted) {
-      await _configureBackgroundLocation();
+      await _configureBackgroundLocation(userAddressCoordinate: userAddressCoordinate);
       await actionSendLocation();
       AnalyticsHelper.setLogEvent(Analytics.permissionGrantedLocation);
     } else {
